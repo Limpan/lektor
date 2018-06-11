@@ -301,7 +301,13 @@ def load_packages(env, reinstall=False):
     """
     config = env.load_config()
     package_root = env.project.get_package_cache_path()
-    update_cache(package_root, config['PACKAGES'],
+    packages = {}
+    for package, version in iteritems(config['PACKAGES']):
+        if not package.startswith('local/'):
+            packages[package] = version
+
+    update_cache(package_root, packages,
+    # update_cache(package_root, config['PACKAGES'],
                  os.path.join(env.root_path, 'packages'),
                  refresh=reinstall)
     add_site(package_root)

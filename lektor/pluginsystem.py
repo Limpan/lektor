@@ -119,9 +119,31 @@ def load_plugins():
 
 def initialize_plugins(env):
     """Initializes the plugins for the environment."""
+    cfg = env.project.open_config()
+
     plugins = load_plugins()
-    for plugin_id, plugin_cls in iteritems(plugins):
-        env.plugin_controller.instanciate_plugin(plugin_id, plugin_cls)
+
+    all_plugin_names = list(plugins.keys())
+
+    load_order = []
+
+    for package, version in iteritems(cfg.section_as_dict('PACKAGES')):
+        try:
+            if package.startswith('local/'):
+                package = package[6:]
+
+            all_plugin_names.remove(package)
+            load_order.append(package)
+        except ValueError:
+            raise RuntimeError('Plugin "%s" not a loaded plugin.'
+                               % package)
+
+    all_plugin_names.sort()
+    load_order.extend(all_plugin_names)
+
+#    for plugin_id, plugin_cls in iteritems(plugins):
+    for plugin_id in load_order:
+        env.plugin_controller.instanciate_plugin(plugin_id, plugins[plugin_id])
     env.plugin_controller.emit('setup-env')
 
 
